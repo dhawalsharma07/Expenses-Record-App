@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
 //import 'package:flutter_expenses_planner/widgets/user_transaction.dart';
 import './widgets/new_transaction.dart';
 import './widgets/Transaction_list.dart';
@@ -7,7 +8,14 @@ import './models/Transaction.dart';
 import './widgets/chart.dart';
 import './widgets/user_transaction.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
@@ -45,7 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // Transaction(id: 't2', title: 'Jeans', money: 1233.99, date: DateTime.now()),
     // Transaction(id: 't3', title: 'Shoes', money: 3977.00, date: DateTime.now()),
   ];
-
+  bool showchart = false;
   List<Transaction> get recentTransaction {
     return userTransaction.where((tx) {
       return tx.date.isAfter(
@@ -89,37 +97,92 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Flutter App',
-        ),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () => (startaddingTransaction(context)),
-          ),
-        ],
+    final islandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+
+    final appbar = AppBar(
+      title: Text(
+        'Expenses Planner',
       ),
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.add),
+          onPressed: () => (startaddingTransaction(context)),
+        ),
+      ],
+    );
+    // final txlist = Container(
+    //   //color: Colors.lightBlue,
+    //   child: Card(
+    //     color: Colors.purple,
+    //     child: Text('ADD YOUR EXPENSES HERE',
+    //         style: TextStyle(
+    //           fontSize: 30,
+    //           color: Colors.black,
+    //         )),
+    //     elevation: 15,
+    //   ),
+    // );
+    final txtrans = Container(
+      height: (MediaQuery.of(context).size.height -
+              appbar.preferredSize.height -
+              MediaQuery.of(context).padding.top) *
+          0.7,
+      child: Transaction_list(userTransaction, deleteTransiction),
+    );
+    return Scaffold(
+      appBar: appbar,
       body: SingleChildScrollView(
         child: Column(
             //mainAxisAlignment: MainAxisAlignment.spaceAround,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              Chart(recentTransaction),
-              Container(
-                //color: Colors.lightBlue,
-                child: Card(
-                  color: Colors.purple,
-                  child: Text('ADD YOUR EXPENSES HERE',
-                      style: TextStyle(
-                        fontSize: 30,
-                        color: Colors.black,
-                      )),
-                  elevation: 15,
+              if (islandscape)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text('Show Chart'),
+                    Switch(
+                      value: showchart,
+                      onChanged: (val) {
+                        setState(() {
+                          showchart = val;
+                        });
+                      },
+                    ),
+                  ],
                 ),
-              ),
-              Transaction_list(userTransaction, deleteTransiction),
+              if (!islandscape)
+                Container(
+                  height: (MediaQuery.of(context).size.height -
+                          appbar.preferredSize.height -
+                          MediaQuery.of(context).padding.top) *
+                      0.3,
+                  child: Chart(recentTransaction),
+                ),
+              if (!islandscape) txtrans,
+              if (islandscape)
+                showchart
+                    ? Container(
+                        height: (MediaQuery.of(context).size.height -
+                                appbar.preferredSize.height -
+                                MediaQuery.of(context).padding.top) *
+                            0.7,
+                        child: Chart(recentTransaction),
+                      )
+                    // : Container(
+                    //     //color: Colors.lightBlue,
+                    //     child: Card(
+                    //       color: Colors.purple,
+                    //       child: Text('ADD YOUR EXPENSES HERE',
+                    //           style: TextStyle(
+                    //             fontSize: 30,
+                    //             color: Colors.black,
+                    //           )),
+                    //       elevation: 15,
+                    //     ),
+                    //   ),
+                    : txtrans
             ]),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
